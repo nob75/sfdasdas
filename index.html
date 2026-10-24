@@ -1,80 +1,259 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>75 Ultra Pooper</title>
-    <style>
-        body {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        h1 {
-            cursor: pointer;
-            padding: 20px;
-            border: 2px solid #ffffff;
-            border-radius: 10px;
-            transition: 0.3s;
-            user-select: none;
-        }
-        h1:hover {
-            background-color: #ffffff;
-            color: #1a1a1a;
-        }
-        /* Стили для пустого всплывающего окошка */
-        #modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            height: 200px;
-            background-color: #333333;
-            border: 3px solid #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-        #close-btn {
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            cursor: pointer;
-            color: #ff5555;
-            font-weight: bold;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Моё расписание</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f5fb;color:#202c48;
+font-family:Arial,sans-serif}
+header{background:#243a73;color:white;padding:28px 18px}
+header,main{padding-left:max(18px,calc((100% - 760px)/2));
+padding-right:max(18px,calc((100% - 760px)/2))}
+h1{margin:0 0 8px;font-size:29px}
+header p{margin:0;color:#dbe4ff}
+main{padding-top:22px;padding-bottom:40px}
+.top{display:flex;justify-content:space-between;
+align-items:center;gap:12px;margin-bottom:18px}
+button{border:0;border-radius:10px;padding:11px 15px;
+cursor:pointer;font-weight:bold}
+.primary{background:#304d9a;color:white}
+.secondary{background:#e7ecfa;color:#263d7a}
+.day{background:white;border:1px solid #e3e7f1;
+border-radius:16px;padding:18px;margin-bottom:12px}
+.day h2{font-size:18px;margin:0 0 14px}
+.subject{display:flex;gap:12px;align-items:center}
+.book{background:#e9eeff;border-radius:12px;padding:12px;
+font-size:22px}
+.subject strong{display:block;margin-bottom:5px}
+.task{color:#596782;white-space:pre-wrap;overflow-wrap:anywhere;
+line-height:1.5}
+.empty{color:#8992a5;font-style:italic}
+textarea,input{width:100%;padding:12px;border:1px solid #cbd3e5;
+border-radius:10px;font:inherit;margin:8px 0}
+textarea{min-height:100px;resize:vertical}
+.editor{margin-top:14px;border-top:1px solid #e4e8f2;
+padding-top:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.status{font-size:13px;color:#64718a;margin:12px 0}
+.hidden{display:none!important}
+footer{text-align:center;color:#7d879c;font-size:12px;
+padding:10px}
+</style>
 </head>
 <body>
+<header>
+  <h1>📚 Моё расписание</h1>
+  <p>Домашние задания по русскому языку</p>
+</header>
+<main>
+  <div class="top">
+    <strong>Расписание на неделю</strong>
+    <button class="secondary" id="loginBtn">Вход</button>
+  </div>
 
-    <!-- Надпись, на которую нужно кликнуть -->
-    <h1 id="trigger">Hello world</h1>
+  <section id="loginBox" class="day hidden">
+    <h2>Вход для администратора</h2>
+    <form id="loginForm">
+      <input id="email" type="email" placeholder="Твоя почта"
+        required autocomplete="username">
+      <input id="password" type="password" placeholder="Пароль"
+        required autocomplete="current-password">
+      <div class="actions">
+        <button class="primary" type="submit">Войти</button>
+        <button class="secondary" type="button"
+          id="cancelLogin">Отмена</button>
+      </div>
+    </form>
+  </section>
 
-    <!-- Пустое всплывающее окошко -->
-    <div id="modal">
-        <span id="close-btn">X</span>
-    </div>
+  <div id="status" class="status">Загружаем расписание...</div>
+  <section id="schedule"></section>
+  <footer>Расписание · Русский язык · 7 дней в неделю</footer>
+</main>
 
-    <script>
-        const trigger = document.getElementById('trigger');
-        const modal = document.getElementById('modal');
-        const closeBtn = document.getElementById('close-btn');
+<script type="module">
+import { createClient } from
+'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-        // Клик на Hello world открывает окно
-        trigger.addEventListener('click', () => {
-            modal.style.display = 'block';
-        });
+// Вставь данные своего проекта Supabase:
+const SUPABASE_URL = 'ВСТАВЬ_URL_ПРОЕКТА';
+const SUPABASE_KEY = 'ВСТАВЬ_PUBLISHABLE_KEY';
+const ADMIN_UID = 'ВСТАВЬ_UUID_АДМИНА';
 
-        // Клик на крестик закрывает окно
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-    </script>
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const days = [
+  'Понедельник','Вторник','Среда','Четверг',
+  'Пятница','Суббота','Воскресенье'
+];
+
+const schedule = document.querySelector('#schedule');
+const status = document.querySelector('#status');
+const loginBox = document.querySelector('#loginBox');
+const loginBtn = document.querySelector('#loginBtn');
+
+let tasks = [];
+let isAdmin = false;
+let busy = false;
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;',
+    '"':'&quot;', "'":'&#39;'
+  })[c]);
+}
+
+function render() {
+  schedule.innerHTML = days.map((day, i) => {
+    const task = tasks.find(t => t.day === i)?.task || '';
+    return `
+      <article class="day">
+        <h2>${day}</h2>
+        <div class="subject">
+          <div class="book">📖</div>
+          <div style="flex:1;min-width:0">
+            <strong>Первая пара — русский язык</strong>
+            <div class="task ${task ? '' : 'empty'}">${
+              task ? escapeHTML(task) :
+              'Домашнее задание пока не задано'
+            }</div>
+          </div>
+        </div>
+        ${isAdmin ? `
+          <div class="editor">
+            <label for="task-${i}"><strong>Изменить задание</strong></label>
+            <textarea id="task-${i}" maxlength="5000"
+              placeholder="Напиши домашнее задание...">${
+                escapeHTML(task)
+              }</textarea>
+            <div class="actions">
+              <button class="primary save" data-day="${i}">
+                Сохранить
+              </button>
+              <button class="secondary clear" data-day="${i}">
+                Очистить
+              </button>
+            </div>
+          </div>` : ''}
+      </article>`;
+  }).join('');
+
+  schedule.querySelectorAll('.save').forEach(btn => {
+    btn.addEventListener('click', () => saveTask(+btn.dataset.day));
+  });
+  schedule.querySelectorAll('.clear').forEach(btn => {
+    btn.addEventListener('click', () => saveTask(+btn.dataset.day, ''));
+  });
+}
+
+async function loadTasks() {
+  status.textContent = 'Загружаем задания...';
+  const { data, error } = await supabase
+    .from('homework').select('day,task').order('day');
+
+  if (error) {
+    status.textContent =
+      'Не удалось загрузить задания. Проверь настройки Supabase.';
+    return;
+  }
+  tasks = data || [];
+  status.textContent = 'Расписание загружено';
+  render();
+}
+
+async function checkUser() {
+  const { data } = await supabase.auth.getSession();
+  const user = data.session?.user;
+  isAdmin = !!user && user.id === ADMIN_UID;
+  loginBtn.textContent = isAdmin ? 'Выйти' : 'Вход';
+  loginBox.classList.add('hidden');
+  render();
+}
+
+async function saveTask(day, forcedValue) {
+  if (!isAdmin || busy) return;
+
+  const value = forcedValue === undefined
+    ? document.querySelector(`#task-${day}`).value.trim()
+    : forcedValue;
+
+  busy = true;
+  status.textContent = 'Сохраняем...';
+
+  const { error } = await supabase.from('homework')
+    .update({ task: value, updated_at: new Date().toISOString() })
+    .eq('day', day);
+
+  busy = false;
+
+  if (error) {
+    status.textContent = 'Ошибка сохранения: проверь права доступа.';
+    return;
+  }
+
+  await loadTasks();
+  status.textContent = 'Задание сохранено!';
+}
+
+loginBtn.addEventListener('click', async () => {
+  if (isAdmin) {
+    await supabase.auth.signOut();
+    isAdmin = false;
+    await checkUser();
+    status.textContent = 'Ты вышел из режима редактирования';
+  } else {
+    loginBox.classList.remove('hidden');
+  }
+});
+
+document.querySelector('#cancelLogin').onclick = () =>
+  loginBox.classList.add('hidden');
+
+document.querySelector('#loginForm').addEventListener('submit',
+  async event => {
+    event.preventDefault();
+    status.textContent = 'Выполняется вход...';
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: document.querySelector('#email').value,
+      password: document.querySelector('#password').value
+    });
+
+    if (error) {
+      status.textContent = 'Не удалось войти. Проверь почту и пароль.';
+      return;
+    }
+
+    await checkUser();
+
+    if (!isAdmin) {
+      await supabase.auth.signOut();
+      status.textContent = 'У этой учётной записи нет прав администратора.';
+      return;
+    }
+
+    status.textContent = 'Ты вошёл. Теперь можно редактировать задания.';
+  });
+
+if (SUPABASE_URL.startsWith('https://') &&
+    SUPABASE_KEY !== 'ВСТАВЬ_PUBLISHABLE_KEY') {
+  await checkUser();
+  await loadTasks();
+
+  // Обновляем расписание, когда другой пользователь
+  // открыл сайт и задания изменились.
+  supabase.channel('homework-changes')
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'homework'
+    }, loadTasks).subscribe();
+} else {
+  status.textContent =
+    'Сначала укажи URL, publishable key и UUID в коде сайта.';
+  render();
+}
+</script>
 </body>
 </html>
