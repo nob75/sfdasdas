@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>75 Ultra Pooper</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            cursor: pointer;
+            padding: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 10px;
+            transition: 0.3s;
+            user-select: none;
+        }
+        h1:hover {
+            background-color: #ffffff;
+            color: #1a1a1a;
+        }
+        /* Стили для пустого всплывающего окошка */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 200px;
+            background-color: #333333;
+            border: 3px solid #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        #close-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+            color: #ff5555;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Надпись, на которую нужно кликнуть -->
+    <h1 id="trigger">Hello world</h1>
+
+    <!-- Пустое всплывающее окошко -->
+    <div id="modal">
+        <span id="close-btn">X</span>
+    </div>
+
+    <script>
+        const trigger = document.getElementById('trigger');
+        const modal = document.getElementById('modal');
+        const closeBtn = document.getElementById('close-btn');
+
+        // Клик на Hello world открывает окно
+        trigger.addEventListener('click', () => {
+            modal.style.display = 'block';
+        });
+
+        // Клик на крестик закрывает окно
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
